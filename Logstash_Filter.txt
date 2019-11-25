@@ -1,0 +1,36 @@
+input {
+ beats {
+   port => 5044
+
+   # Set to False if you do not use SSL
+   ssl => true
+
+   # Delete below linesif you do not use SSL
+   ssl_certificate => "/etc/pki/tls/certs/logstash-forwarder.crt"
+   ssl_key => "/etc/pki/tls/private/logstash-forwarder.key"
+   }
+}
+filter {
+
+    grok {
+       match => { "message" => "%{DATE_US} %{TIME};%{WORD:Job_Status};%{NUMBER:Job_Id}.%{WORD:Log_Server};%{WORD:User}(?<symbol>[=]*)%{WORD:User_Name} %{WORD:Group}(?<symbol1>[=]*)%{WORD:Group_Name} %{WORD:Project}(?<symbol2>[=]*)%{WORD:Project_Details} %{WORD:Job_Name}(?<symbol3>[=]*)%{WORD:Name_of_Job} %{WORD:Queue}(?<symbol4>[=]*)%{WORD:Queue_Name} %{WORD:CTime}(?<symbol5>[=]*)%{WORD:CTIME} %{WORD:QTime}(?<symbol6>[=]*)%{WORD:QTIME} %{WORD:ETime}(?<symbol7>[=]*)%{WORD:ETIME} %{WORD:STart}(?<symbol8>[=]*)%{WORD:START} %{WORD:Exec_Host}(?<symbol9>[=]*)%{WORD:Node_Name}(?<symbol10>[/]*)%{WORD:Node_Syntax} %{WORD:Exec_VNode}(?<symbol11>[=]*)(?<symbol12>[(]*)%{WORD:Exec_Node_Name}(?<symbol13>[:]*)%{WORD:Exec_CPUS}(?<symbol14>[=]*)%{WORD:No_of_Cpus}(?<symbol15>[:]*)%{WORD:Memory}(?<symbol16>[=]*)%{WORD:Mem_Consumed}(?<symbol17>[)]*) %{WORD:Resource_List_Mem}.%{WORD:Mem_Re}(?<symbol18>[=]*)%{WORD:Mem_Requested} %{WORD:Resource_List_Ncpus}.%{WORD:Ncpus_Re}(?<symbol19>[=]*)%{WORD:Ncpus_Requested} %{WORD:Resource_List_Nodect}.%{WORD:Nodect_Re}(?<symbol20>[=]*)%{WORD:Nodect_Requested} %{WORD:Resource_List_Place}.%{WORD:Place_Re}(?<symbol21>[=]*)%{WORD:Place_Status} %{WORD:Resource_List_Select}.%{WORD:Select_Re}(?<symbol22>[=]*)%{WORD:Place_Chunks}(?<symbol23>[:]*)%{WORD:Select_Ncpus}(?<symbol24>[=]*)%{WORD:Place_Ncpus}(?<symbol25>[:]*)%{WORD:Select_Mem}(?<symbol26>[=]*)%{WORD:Place_Mem} %{WORD:Resource_List_Walltime}.%{WORD:Walltime_Re}(?<symbol27>[=]*)%{TIME:Walltime_Requested} %{WORD:Session}(?<symbol28>[=]*)%{WORD:SESSION} %{WORD:End}(?<symbol29>[=]*)%{WORD:END} %{WORD:ExitStatus}(?<symbol30>[=]*)%{WORD:Exit_Status} %{WORD:Resources_Used_Cpupercent}.%{WORD:Used_CpuPer}(?<symbol31>[=]*)%{WORD:Cpupercent} %{WORD:Resources_Used_Cput}.%{WORD:Used_Cput}(?<symbol32>[=]*)%{TIME:CPUT} %{WORD:Resources_Used_Mem}.%{WORD:Used_Mem}(?<symbol33>[=]*)%{WORD:Actual_Memory_Used} %{WORD:Resources_Used_Ncpus}.%{WORD:Used_Ncpus}(?<symbol34>[=]*)%{WORD:Actual_Ncpus_Used} %{WORD:Resources_Used_VMem}.%{WORD:Used_VMem}(?<symbol35>[=]*)%{WORD:Actual_VMem_Used} %{WORD:Resources_Used_Walltime}.%{WORD:Used_Walltime}(?<symbol36>[=]*)%{TIME:Actual_Walltime_Used} %{WORD:Running_Count}(?<symbol37>[=]*)%{WORD:Run_Count}" }
+   }
+
+if [type] == "syslog" {
+    grok {
+      match => { "message" => "%{SYSLOGLINE}" }
+    }date {
+match => [ "timestamp", "MMM  d HH:mm:ss", "MMM dd HH:mm:ss" ]
+}
+  }
+
+}
+output {
+ elasticsearch {
+  hosts => localhost
+    index => "%{[@metadata][beat]}-%{+YYYY.MM.dd}"
+       }
+stdout {
+    codec => rubydebug
+       }
+}
